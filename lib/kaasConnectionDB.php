@@ -74,7 +74,6 @@ class KaasConnectionDB
             // UPDATE
             $stack = explode(" ", $sql_statemant);
             $table_name = $stack[1];
-        
         } elseif (preg_match("/^DELETE FROM\b/i", $sql_statemant)) {
 
             // DELETE
@@ -90,9 +89,9 @@ class KaasConnectionDB
         #print_r($result); die("testando metodo checkkk"); 
 
         // Check if data fetched is greater than 0.
-        if (count($result) <= 0) 
+        if (count($result) <= 0)
             return true;
-        
+
 
         return false;
     }
@@ -100,8 +99,9 @@ class KaasConnectionDB
     // Generic methods for querying the database, all below
     // --------------------------------------------------------------------------------------------------------------
     // Generic query methods
-    public function select(string $sql)
+    public function select(string $sql, array $data = [])
     {
+        $result = null;
 
         // Check if the SELECT statement is written correctly
         if (!preg_match('/^SELECT\b/i', $sql)) {
@@ -109,7 +109,26 @@ class KaasConnectionDB
             exit(2);
         }
 
-        echo "Ok";
+        // Check whether was passed the second param or not
+        if (array_count_values($data) == null) {
+
+            // Make query withouth params 
+            $stmt = $this->cmd->prepare($sql);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+
+            // Make query with the params
+            $stmt = $this->cmd->prepare($sql);
+            $stmt->execute($data);
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+           
+        }
+
+
+        #echo "<pre>";
+        #print_r($result); die("testando select");
+        return $result;
     }
 
     // Generic query method to insert data
@@ -167,7 +186,7 @@ class KaasConnectionDB
     }
 
     // Generic query method to delete data
-    public function delete(string $sql)
+    public function delete(string $sql, array $data = [])
     {
 
         // Check if the DELETE statement is written correctly
@@ -176,10 +195,23 @@ class KaasConnectionDB
             exit(2);
         }
 
-         // Check if the table is null
-         if ($this->is_table_null($sql)) {
+        // Check if the table is null
+        if ($this->is_table_null($sql)) {
             echo '<script>window.alert("No records were found in the table");</script>';
             exit(3);
+        }
+
+        // Check whether was passed the second param or not
+        if (array_count_values($data) == null) {
+
+            // Make query withouth params 
+            $stmt = $this->cmd->prepare($sql);
+            $stmt->execute();
+        } else {
+
+            // Make query with the params
+            $stmt = $this->cmd->prepare($sql);
+            $stmt->execute($data);
         }
     }
 }
