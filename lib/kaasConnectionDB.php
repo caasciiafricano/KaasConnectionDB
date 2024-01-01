@@ -11,6 +11,8 @@
     // Setting datatypes strict declaraction
     declare(strict_types=1);
 
+use function PHPSTORM_META\map;
+
     // Importing settings script
     include_once "config/config.php";
 
@@ -21,7 +23,7 @@
 
         // Class Propierties, all useful below
         // --------------------------------------------------------------------------------------------------------------
-        private string $conn = "";
+        private string $conn = "mysql:host=" . MYSQL_HOST . ";dbname=" . MYSQL_DBNAME . ";charset=" . MYSQL_CHAR;
         private $cmd = null;
         
         // Magic method of class to build connection with the database
@@ -32,19 +34,21 @@
             if(!$this->check_mysql_drivers()){
                 echo '<script>console.log("[ERROR] »» Cannot connect with MySQL, Verify if all useful pdo extensions are available and try again")</script>';
                 exit(1);
+
+            }else{
+
+                // Execute connection if all settings are okay
+                $this->cmd = new PDO(
+                    $this->conn,
+                    MYSQL_USER,
+                    MYSQL_PASS,
+                    array(PDO::ATTR_PERSISTENT)
+                );
+                
+                
             }
-
-            #$this->conn = "mysql:host=" + MYSQL_HOST + ";dbname=" + MYSQL_DBNAME + ";charset=" + MYSQL_CHAR;
-
-            /*
-            $this->cmd = new PDO(
-                $this->conn,
-                MYSQL_USER,
-                MYSQL_PASS,
-                array(PDO::ATTR_PERSISTENT)
-            );
-            */
-            #$this->delete("DELETE FROM");
+            
+            
         }
 
         // Class Method for database settings, all below
@@ -61,7 +65,42 @@
                 return false;
 
             return true;
-        }        
+        }       
+        
+        // Method to check if exists data on the table
+        private function is_table_null(string $sql_statemant) : bool{
+
+            $stack = [];
+
+            if(preg_match("/^UPDATE\b/i",$sql_statemant)){
+                
+                $stack = explode(" ",$sql_statemant);
+                $table_name = $stack[1];
+
+            }elseif(preg_match("/^INSERT INTO\b/i",$sql_statemant)){
+                
+                $stack = explode(" ",$sql_statemant);
+                $table_name = $stack[2];
+
+            }elseif(preg_match("/^DELETE FROM\b/i",$sql_statemant)){
+                
+                $stack = explode(" ",$sql_statemant);
+                $table_name = $stack[2];
+            }
+            
+            
+            // Fetch all data on the database
+            $stmt = $this->cmd->query("SELECT COUNT(*) FROM {$table_name}");
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC)[0];
+            
+            // Check if data fetched is greater than 0.
+            if($result[0] > 0){
+                return false;
+            }else{
+                return true;
+            }
+            
+        }    
 
         // Generic methods for querying the database, all below
         // --------------------------------------------------------------------------------------------------------------
@@ -85,6 +124,11 @@
                 echo '<script>console.log("You have problems with the syntax of INSERT INTO Statements")</script>';
                 exit(2);
             }
+
+            // Check if the table is null
+            if(!$this->is_table_null($sql))
+                echo '<script>window.alert("No records were found in the table");</script>';
+        
 
             echo "Ok";
         }
@@ -110,7 +154,7 @@
                 exit(2);
             }
 
-            echo "Ok";
+            
             
         }
     }
