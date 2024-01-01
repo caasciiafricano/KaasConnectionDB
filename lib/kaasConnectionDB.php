@@ -84,15 +84,17 @@ class KaasConnectionDB
 
 
         // Fetch all data on the database
-        $stmt = $this->cmd->query("SELECT COUNT(*) FROM {$table_name};");
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC)[0];
+        $stmt = $this->cmd->query("SELECT * FROM {$table_name};");
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        #print_r($result); die("testando metodo checkkk"); 
 
         // Check if data fetched is greater than 0.
-        if ($result[0] > 0) {
-            return false;
-        } else {
+        if (count($result) <= 0) 
             return true;
-        }
+        
+
+        return false;
     }
 
     // Generic methods for querying the database, all below
