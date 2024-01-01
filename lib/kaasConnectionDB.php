@@ -117,7 +117,7 @@ use function PHPSTORM_META\map;
         }
 
         // Generic query method to insert data
-        public function insert(string $sql){
+        public function insert(string $sql, array $data = []){
             
             // Check if the INSERT statement is written correctly
             if(!preg_match('/^INSERT INTO\b/i',$sql)){
@@ -126,11 +126,26 @@ use function PHPSTORM_META\map;
             }
 
             // Check if the table is null
-            if(!$this->is_table_null($sql))
+            if($this->is_table_null($sql)){
                 echo '<script>window.alert("No records were found in the table");</script>';
-        
+                exit(3);
+            }
+            
+            // Check whether was passed the second param or not
+            if(array_count_values($data) == null){
 
-            echo "Ok";
+                // Make query withouth params 
+                $stmt = $this->cmd->prepare($sql);
+                $stmt->execute();
+
+            }else{
+
+                 // Make query with the params
+                 $stmt = $this->cmd->prepare($sql);
+                 $stmt->execute($data);
+            }
+                
+
         }
 
         // Generic query method to update data
